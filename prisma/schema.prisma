@@ -5,24 +5,36 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  engineType = "library"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  phone     String?
-  birthDate DateTime
-  role      Role     @default(ALUNO)
+  id            String   @id @default(uuid())
+  supabaseId    String   @unique
+  name          String
+  email         String   @unique
+  phone         String?
+  birthDate     DateTime
+  avatarUrl     String?
+  role          Role     @default(ALUNO)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  invitesCreated InviteCode[]        @relation("ProfessorInvites")
+  students       Enrollment[]        @relation("ProfessorEnrollments")
+  professors     Enrollment[]        @relation("StudentEnrollments")
+  plansCreated   WeeklyPlan[]        @relation("ProfessorPlans")
+  plansReceived  WeeklyPlan[]        @relation("StudentPlans")
+  completions    WorkoutCompletion[] @relation("StudentCompletions")
+  meals          Meal[]              @relation("StudentMeals")
+  pushTokens     PushToken[]
 }
 
 enum Role {
@@ -30,5 +42,111 @@ enum Role {
   ALUNO
 }
 
+model InviteCode {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  professorId String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
 
+  professor   User         @relation("ProfessorInvites", fields: [professorId], references: [id])
+  enrollments Enrollment[]
+}
 
+model Enrollment {
+  id           String   @id @default(uuid())
+  professorId  String
+  studentId    String
+  inviteCodeId String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  professor    User        @relation("ProfessorEnrollments", fields: [professorId], references: [id])
+  student      User        @relation("StudentEnrollments", fields: [studentId], references: [id])
+  inviteCode   InviteCode? @relation(fields: [inviteCodeId], references: [id])
+}
+
+model WeeklyPlan {
+  id          String   @id @default(uuid())
+  name        String
+  professorId String
+  studentId   String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  
+  days        DayPlan[]
+  professor   User     @relation("ProfessorPlans", fields: [professorId], references: [id])
+  student     User     @relation("StudentPlans", fields: [studentId], references: [id])
+}
+
+model DayPlan {
+  id           String   @id @default(uuid())
+  weeklyPlanId String
+  dayOfWeek    String
+  name         String
+  
+  weeklyPlan   WeeklyPlan          @relation(fields: [weeklyPlanId], references: [id], onDelete: Cascade)
+  exercises    Exercise[]
+  completions  WorkoutCompletion[]
+}
+
+model Exercise {
+  id          String   @id @default(uuid())
+  dayPlanId   String
+  name        String
+  sets        Int
+  reps        Int
+  loadKg      Float?
+  restSeconds Int?
+  notes       String?
+  order       Int
+
+  dayPlan     DayPlan @relation(fields: [dayPlanId], references: [id], onDelete: Cascade)
+}
+
+model WorkoutCompletion {
+  id          String   @id @default(uuid())
+  studentId   String
+  dayPlanId   String
+  date        DateTime
+
+  student     User    @relation("StudentCompletions", fields: [studentId], references: [id])
+  dayPlan     DayPlan @relation(fields: [dayPlanId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, dayPlanId, date])
+}
+
+model Meal {
+  id        String   @id @default(uuid())
+  studentId String
+  type      String
+  date      DateTime
+  
+  student   User       @relation("StudentMeals", fields: [studentId], references: [id])
+  items     MealItem[]
+
+  @@unique([studentId, type, date])
+}
+
+model MealItem {
+  id       String  @id @default(uuid())
+  mealId   String
+  name     String
+  quantity Float
+  unit     String
+  calories Float?
+  protein  Float?
+  carbs    Float?
+  fat      Float?
+
+  meal     Meal    @relation(fields: [mealId], references: [id], onDelete: Cascade)
+}
+
+model PushToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

@@ -17,9 +17,26 @@ export const AuthService = {
       throw new AppError(401, 'AUTH_FAILED', 'No session returned');
     }
 
+    const dbUser = await prisma.user.findUnique({
+      where: { supabaseId: data.user.id }
+    });
+
+    if (!dbUser) {
+      throw new AppError(404, 'USER_NOT_FOUND', 'User not synced in database');
+    }
+
     return {
       access_token: data.session.access_token,
       refresh_token: data.session.refresh_token,
+      user: {
+        id: dbUser.id,
+        name: dbUser.name,
+        email: dbUser.email,
+        role: dbUser.role,
+        birthDate: dbUser.birthDate,
+        phone: dbUser.phone,
+        avatarUrl: dbUser.avatarUrl,
+      }
     };
   },
 

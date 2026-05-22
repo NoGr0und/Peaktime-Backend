@@ -9,12 +9,25 @@ beforeEach(() => {
 
 test('login returns session on success', async () => {
   vi.spyOn(supabase.auth, 'signInWithPassword').mockResolvedValue({
-    data: { session: { access_token: 'fake-jwt', refresh_token: 'fake-refresh' }, user: {} },
+    data: { session: { access_token: 'fake-jwt', refresh_token: 'fake-refresh' }, user: { id: 'supabase-uid-123' } },
     error: null,
   } as any);
 
+  prisma.user = {
+    findUnique: vi.fn().mockResolvedValue({
+      id: 'local-uuid-123',
+      name: 'João Professor',
+      email: 'test@test.com',
+      role: 'PROFESSOR',
+      birthDate: new Date('1990-01-01'),
+      phone: '11999999999',
+      avatarUrl: 'https://example.com/avatar.jpg'
+    })
+  } as any;
+
   const result = await AuthService.login('test@test.com', 'password123');
   expect(result.access_token).toBe('fake-jwt');
+  expect(result.user.name).toBe('João Professor');
 });
 
 test('login throws Error on failure', async () => {

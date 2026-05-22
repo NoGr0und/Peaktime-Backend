@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { AuthService } from './auth.service.js';
 import { loginSchema, registerSchema } from './auth.schema.js';
+import { authenticate } from '../../middleware/authenticate.js';
 
 export async function authRoutes(fastify: FastifyInstance) {
   fastify.setErrorHandler((error, request, reply) => {
@@ -32,6 +33,18 @@ export async function authRoutes(fastify: FastifyInstance) {
           properties: {
             access_token: { type: 'string' },
             refresh_token: { type: 'string' },
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', format: 'uuid' },
+                name: { type: 'string' },
+                email: { type: 'string' },
+                role: { type: 'string' },
+                birthDate: { type: 'string' },
+                phone: { type: 'string', nullable: true },
+                avatarUrl: { type: 'string', nullable: true },
+              },
+            },
           },
         },
         400: {
@@ -128,5 +141,34 @@ export async function authRoutes(fastify: FastifyInstance) {
       }
       return reply.status(err.statusCode || 500).send({ error: err.message });
     }
+  });
+
+  fastify.get('/me', {
+    schema: {
+      tags: ['Auth'],
+      summary: 'Obter perfil do usuário logado',
+      security: [{ BearerAuth: [] }],
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            name: { type: 'string' },
+            email: { type: 'string' },
+            role: { type: 'string' },
+            birthDate: { type: 'string' },
+            phone: { type: 'string', nullable: true },
+            avatarUrl: { type: 'string', nullable: true },
+          },
+        },
+        401: {
+          type: 'object',
+          properties: { error: { type: 'string' } },
+        },
+      },
+    },
+    preValidation: [authenticate],
+  }, async (request, reply) => {
+    return reply.send((request as any).user);
   });
 }

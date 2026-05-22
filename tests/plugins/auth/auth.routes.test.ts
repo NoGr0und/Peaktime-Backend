@@ -8,10 +8,21 @@ test('POST /api/auth/login returns 200 and tokens', async () => {
   const app = await buildApp();
   await app.ready();
   
-  vi.spyOn(supabase.auth, 'signInWithPassword').mockResolvedValue({
-    data: { session: { access_token: 'jwt-123', refresh_token: 'refresh-123' }, user: {} },
-    error: null,
-  } as any);
+  const mockLoginResult = {
+    access_token: 'jwt-123',
+    refresh_token: 'refresh-123',
+    user: {
+      id: 'local-uuid-123',
+      name: 'João Professor',
+      email: 'test@test.com',
+      role: 'PROFESSOR',
+      birthDate: '1990-01-01T00:00:00.000Z',
+      phone: '11999999999',
+      avatarUrl: 'https://example.com/avatar.jpg'
+    }
+  };
+
+  vi.spyOn(AuthService, 'login').mockResolvedValue(mockLoginResult as any);
 
   const response = await supertest(app.server)
     .post('/api/auth/login')
@@ -19,6 +30,7 @@ test('POST /api/auth/login returns 200 and tokens', async () => {
 
   expect(response.status).toBe(200);
   expect(response.body.access_token).toBe('jwt-123');
+  expect(response.body.user.name).toBe('João Professor');
 });
 
 test('POST /api/auth/register returns 200 and user data', async () => {
