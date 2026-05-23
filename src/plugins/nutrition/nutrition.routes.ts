@@ -45,7 +45,22 @@ export async function nutritionRoutes(fastify: FastifyInstance) {
             studentId: { type: 'string', format: 'uuid' },
             type: { type: 'string' },
             date: { type: 'string', format: 'date-time' },
-            items: { type: 'array', items: { type: 'object' } },
+            items: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', format: 'uuid' },
+                  name: { type: 'string' },
+                  quantity: { type: 'number' },
+                  unit: { type: 'string' },
+                  calories: { type: 'number', nullable: true },
+                  protein: { type: 'number', nullable: true },
+                  carbs: { type: 'number', nullable: true },
+                  fat: { type: 'number', nullable: true }
+                }
+              }
+            },
           },
         },
         403: {
@@ -85,7 +100,22 @@ export async function nutritionRoutes(fastify: FastifyInstance) {
               id: { type: 'string', format: 'uuid' },
               type: { type: 'string' },
               date: { type: 'string', format: 'date-time' },
-              items: { type: 'array', items: { type: 'object' } },
+              items: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', format: 'uuid' },
+                    name: { type: 'string' },
+                    quantity: { type: 'number' },
+                    unit: { type: 'string' },
+                    calories: { type: 'number', nullable: true },
+                    protein: { type: 'number', nullable: true },
+                    carbs: { type: 'number', nullable: true },
+                    fat: { type: 'number', nullable: true }
+                  }
+                }
+              },
             },
           },
         },
