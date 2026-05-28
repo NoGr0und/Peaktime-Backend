@@ -138,4 +138,7 @@ dist
 
 /src/generated/prisma
 /.agents
+/docs
+API_DOCUMENTATION.md
+backend.md
 
