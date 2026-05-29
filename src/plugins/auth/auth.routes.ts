@@ -85,7 +85,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           email: { type: 'string', format: 'email', example: 'aluno@email.com' },
           password: { type: 'string', minLength: 6, example: 'senha123' },
           name: { type: 'string', example: 'João Silva' },
-          birthDate: { type: 'string', format: 'date-time', example: '1995-10-25T00:00:00.000Z' },
+          birthDate: { type: 'string', example: '1995-10-25T00:00:00.000Z' },
           role: { type: 'string', enum: ['PROFESSOR', 'ALUNO'], example: 'ALUNO' },
           phone: { type: 'string', example: '11999999999' },
           avatarUrl: { type: 'string', format: 'uri', example: 'https://example.com/avatar.jpg' },
