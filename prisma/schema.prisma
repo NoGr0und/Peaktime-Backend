@@ -150,3 +150,12 @@ model PushToken {
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+model OccupancyReading {
+  id        String   @id @default(uuid())
+  count     Int
+  capacity  Int
+  timestamp DateTime @default(now())
+
+  @@index([timestamp])
+}

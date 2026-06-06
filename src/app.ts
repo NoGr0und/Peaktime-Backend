@@ -7,6 +7,7 @@ import enrollmentPlugin from './plugins/enrollment/enrollment.plugin.js'
 import workoutsPlugin from './plugins/workouts/workouts.plugin.js'
 import nutritionPlugin from './plugins/nutrition/nutrition.plugin.js'
 import settingsPlugin from './plugins/settings/settings.plugin.js'
+import occupancyPlugin from './plugins/occupancy/occupancy.plugin.js'
 
 const app = fastify({
   logger: true,
@@ -41,6 +42,7 @@ app.register(swagger, {
       { name: 'Workouts', description: 'Planos semanais de treino e acompanhamento diário' },
       { name: 'Nutrition', description: 'Registro de refeições e busca de alimentos' },
       { name: 'Settings', description: 'Configurações e notificações push (Expo)' },
+      { name: 'Occupancy', description: 'Monitoramento em tempo real da ocupação' },
     ],
     components: {
       securitySchemes: {
@@ -85,5 +87,6 @@ app.register(enrollmentPlugin)
 app.register(workoutsPlugin)
 app.register(nutritionPlugin)
 app.register(settingsPlugin)
+app.register(occupancyPlugin)
 
 export { app }

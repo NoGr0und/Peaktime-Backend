@@ -68,10 +68,16 @@ export async function workoutsRoutes(fastify: FastifyInstance) {
     },
   }, async (request, reply) => {
     const user: any = (request as any).user;
-    if (user.role !== 'PROFESSOR') throw new AppError(403, 'FORBIDDEN', 'Professors only');
-
     const data = createPlanSchema.parse(request.body);
-    const result = await WorkoutsService.createPlan(user.id, data.studentId, data);
+
+    if (user.role === 'ALUNO' && data.studentId !== user.id) {
+      throw new AppError(403, 'FORBIDDEN', 'Alunos só podem criar treinos para si mesmos');
+    } else if (user.role !== 'PROFESSOR' && user.role !== 'ALUNO') {
+      throw new AppError(403, 'FORBIDDEN', 'Apenas professores ou o próprio aluno');
+    }
+
+    const professorId = user.id; // Either the actual professor, or the student acting as their own professor
+    const result = await WorkoutsService.createPlan(professorId, data.studentId, data);
     return reply.send(result);
   });
 
@@ -101,6 +107,50 @@ export async function workoutsRoutes(fastify: FastifyInstance) {
 
     const result = await WorkoutsService.getTodayWorkout(user.id, todayStr);
     return reply.send(result || { message: 'No workout today' });
+  });
+
+  fastify.get('/weekly', {
+    schema: {
+      tags: ['Workouts'],
+      summary: 'Dashboard semanal de treinos',
+      description: 'Retorna todos os planos ativos e os dias concluídos na semana atual.',
+      security: [{ BearerAuth: [] }],
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            plans: { type: 'array', items: { type: 'object', additionalProperties: true } },
+            completions: { type: 'array', items: { type: 'object', additionalProperties: true } },
+          },
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const user: any = (request as any).user;
+    const result = await WorkoutsService.getWeeklyDashboard(user.id);
+    return reply.send(result);
+  });
+
+  fastify.get('/history', {
+    schema: {
+      tags: ['Workouts'],
+      summary: 'Histórico de treinos concluídos',
+      description: 'Retorna todo o histórico de treinos já feitos pelo aluno, com detalhes do plano.',
+      security: [{ BearerAuth: [] }],
+      response: {
+        200: {
+          type: 'array',
+          items: { type: 'object', additionalProperties: true }
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const user: any = (request as any).user;
+    if (user.role !== 'ALUNO' && user.role !== 'PROFESSOR') {
+      throw new AppError(403, 'FORBIDDEN', 'Access denied');
+    }
+    const result = await WorkoutsService.getHistory(user.id);
+    return reply.send(result);
   });
 
   fastify.post('/complete', {

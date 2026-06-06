@@ -30,8 +30,8 @@ export const WorkoutsService = {
     });
   },
 
-  async getActivePlan(studentId: string) {
-    return prisma.weeklyPlan.findFirst({
+  async getActivePlans(studentId: string) {
+    return prisma.weeklyPlan.findMany({
       where: { studentId, active: true },
       include: { days: { include: { exercises: true } } },
       orderBy: { createdAt: 'desc' }
@@ -39,10 +39,44 @@ export const WorkoutsService = {
   },
 
   async getTodayWorkout(studentId: string, dayOfWeek: string) {
-    const activePlan = await this.getActivePlan(studentId);
-    if (!activePlan) return null;
+    const activePlans = await this.getActivePlans(studentId);
+    if (activePlans.length === 0) return null;
 
-    return activePlan.days.find(d => d.dayOfWeek === dayOfWeek) || null;
+    // Apenas retorna o do primeiro plano ativo para retrocompatibilidade
+    return activePlans[0].days.find(d => d.dayOfWeek === dayOfWeek) || null;
+  },
+
+  async getWeeklyDashboard(studentId: string) {
+    const plans = await this.getActivePlans(studentId);
+    
+    // Get current week's start and end dates
+    const now = new Date();
+    const day = now.getDay();
+    // Assuming week starts on Monday (1) and ends on Sunday (0)
+    // Adjust logic to get Monday 00:00:00 to Sunday 23:59:59
+    const diffToMonday = now.getDate() - day + (day === 0 ? -6 : 1);
+    
+    const startOfWeek = new Date(now.setDate(diffToMonday));
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    const completions = await prisma.workoutCompletion.findMany({
+      where: {
+        studentId,
+        date: {
+          gte: startOfWeek,
+          lte: endOfWeek
+        }
+      }
+    });
+
+    return {
+      plans,
+      completions
+    };
   },
 
   async completeWorkout(studentId: string, dayPlanId: string, date: Date) {
@@ -57,5 +91,21 @@ export const WorkoutsService = {
     } catch (e) {
       throw new AppError(409, 'ALREADY_COMPLETED', 'Workout already completed today');
     }
+  },
+
+  async getHistory(studentId: string) {
+    return prisma.workoutCompletion.findMany({
+      where: { studentId },
+      include: {
+        dayPlan: {
+          include: {
+            exercises: {
+              orderBy: { order: 'asc' }
+            }
+          }
+        }
+      },
+      orderBy: { date: 'desc' }
+    });
   }
 };
