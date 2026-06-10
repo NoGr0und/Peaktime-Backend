@@ -9,6 +9,9 @@ import nutritionPlugin from './plugins/nutrition/nutrition.plugin.js'
 import settingsPlugin from './plugins/settings/settings.plugin.js'
 import occupancyPlugin from './plugins/occupancy/occupancy.plugin.js'
 
+// Importa o cliente do Prisma (Ajusta o caminho se o teu ficheiro estiver noutro local dentro de src/lib)
+import { prisma } from './lib/prisma.js'
+
 const app = fastify({
   logger: true,
   ajv: {
@@ -80,6 +83,52 @@ app.get('/health', {
   }
 }, async (request, reply) => {
   return { status: 'ok' }
+})
+app.post('/api/occupancy/hardware', {
+  schema: {
+    tags: ['Occupancy'],
+    summary: 'Atualiza a lotação via hardware (botões ESP32/Wokwi)',
+    body: {
+      type: 'object',
+      required: ['change'],
+      properties: {
+        change: { type: 'number', description: '1 para somar (entrada), -1 para subtrair (saída)' }
+      }
+    },
+    // ... (o resto do schema do swagger continua igual)
+  }
+}, async (request, reply) => {
+  const { change } = request.body as { change: number }
+
+  try {
+    // 1. Busca a leitura mais recente no banco de dados
+    const lastReading = await prisma.occupancyReading.findFirst({
+      orderBy: { timestamp: 'desc' }
+    })
+
+    // 2. Define os valores base (se não houver leitura anterior, começa do zero)
+    const currentCount = lastReading ? lastReading.count : 0
+    const capacity = lastReading ? lastReading.capacity : 100 // Capacidade padrão
+
+    // 3. Calcula o novo valor garantindo que não fica negativo
+    const newCount = Math.max(0, currentCount + change)
+
+    // 4. Cria um novo registo de ocupação com o timestamp atual
+    const newReading = await prisma.occupancyReading.create({
+      data: {
+        count: newCount,
+        capacity: capacity
+      }
+    })
+
+    return reply.status(200).send({ 
+      success: true, 
+      newOccupancy: newReading.count 
+    })
+  } catch (error) {
+    request.log.error(error)
+    return reply.status(500).send({ error: "Erro ao atualizar a lotação via hardware" })
+  }
 })
 
 app.register(authPlugin)
