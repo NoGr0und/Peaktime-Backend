@@ -1,10 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { AuthService } from './auth.service.js';
-import { loginSchema, registerSchema } from './auth.schema.js';
+import { loginSchema, registerSchema, updateProfileSchema } from './auth.schema.js';
 import { authenticate } from '../../middleware/authenticate.js';
 
 export async function authRoutes(fastify: FastifyInstance) {
-  fastify.setErrorHandler((error, request, reply) => {
+  fastify.setErrorHandler((error: any, request, reply) => {
     if (error.validation) {
       return reply.status(400).send({
         error: 'Validation Error',
@@ -170,5 +170,57 @@ export async function authRoutes(fastify: FastifyInstance) {
     preValidation: [authenticate],
   }, async (request, reply) => {
     return reply.send((request as any).user);
+  });
+
+  fastify.put('/me', {
+    schema: {
+      tags: ['Auth'],
+      summary: 'Atualizar perfil do usuário logado',
+      security: [{ BearerAuth: [] }],
+      body: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          birthDate: { type: 'string' },
+          phone: { type: 'string', nullable: true },
+          avatarUrl: { type: 'string', nullable: true },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            name: { type: 'string' },
+            email: { type: 'string' },
+            role: { type: 'string' },
+            birthDate: { type: 'string' },
+            phone: { type: 'string', nullable: true },
+            avatarUrl: { type: 'string', nullable: true },
+          },
+        },
+        400: {
+          type: 'object',
+          properties: { error: { type: 'string' }, details: { type: 'array', items: { type: 'object' } } },
+        },
+        401: {
+          type: 'object',
+          properties: { error: { type: 'string' } },
+        },
+      },
+    },
+    preValidation: [authenticate],
+  }, async (request, reply) => {
+    try {
+      const data = updateProfileSchema.parse(request.body);
+      const user: any = (request as any).user;
+      const updatedUser = await AuthService.updateProfile(user.id, data);
+      return reply.send(updatedUser || user);
+    } catch (err: any) {
+      if (err.name === 'ZodError') {
+        return reply.status(400).send({ error: 'Validation Error', details: err.errors });
+      }
+      throw err;
+    }
   });
 }

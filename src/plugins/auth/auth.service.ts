@@ -97,6 +97,30 @@ export const AuthService = {
     } catch (dbError: any) {
       throw new AppError(500, 'DATABASE_ERROR', dbError.message || 'Failed to create user in database');
     }
+  },
+
+  async updateProfile(userId: string, data: { name?: string; birthDate?: string; phone?: string; avatarUrl?: string }) {
+    const updateData: any = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.birthDate !== undefined) updateData.birthDate = new Date(data.birthDate);
+    if (data.phone !== undefined) updateData.phone = data.phone || null;
+    if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl || null;
+
+    if (Object.keys(updateData).length === 0) return;
+
+    return prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        birthDate: true,
+        phone: true,
+        avatarUrl: true,
+      }
+    });
   }
 };
 

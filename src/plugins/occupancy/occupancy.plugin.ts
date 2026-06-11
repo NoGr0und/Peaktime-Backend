@@ -1,6 +1,6 @@
 import fp from 'fastify-plugin';
 import type { FastifyInstance } from 'fastify';
-import { occupancyRoutes } from './occupancy.routes';
+import { occupancyRoutes } from './occupancy.routes.js';
 
 async function occupancyPlugin(fastify: FastifyInstance) {
   fastify.register(occupancyRoutes, { prefix: '/api/occupancy' });

@@ -155,4 +155,38 @@ export async function enrollmentRoutes(fastify: FastifyInstance) {
     const result = await EnrollmentService.getProfessor(user.id);
     return reply.send(result);
   });
+
+  fastify.delete('/:id', {
+    schema: {
+      tags: ['Enrollment'],
+      summary: 'Remover vínculo',
+      description: 'Remove um vínculo entre professor e aluno. Professores podem remover seus alunos, e alunos podem remover seus professores.',
+      security: [{ BearerAuth: [] }],
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: { success: { type: 'boolean' } },
+        },
+        403: {
+          type: 'object',
+          properties: { error: { type: 'string' } },
+        },
+        404: {
+          type: 'object',
+          properties: { error: { type: 'string' } },
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const user: any = (request as any).user;
+    const { id } = request.params as { id: string };
+    await EnrollmentService.unenroll(id, user.id, user.role);
+    return reply.send({ success: true });
+  });
 }

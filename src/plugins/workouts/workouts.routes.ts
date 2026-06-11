@@ -131,6 +131,39 @@ export async function workoutsRoutes(fastify: FastifyInstance) {
     return reply.send(result);
   });
 
+  fastify.get('/student/:studentId/dashboard', {
+    schema: {
+      tags: ['Workouts'],
+      summary: 'Dashboard semanal de treinos de um aluno',
+      description: 'Professor busca os planos ativos de um aluno específico.',
+      security: [{ BearerAuth: [] }],
+      params: {
+        type: 'object',
+        required: ['studentId'],
+        properties: {
+          studentId: { type: 'string', format: 'uuid' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            plans: { type: 'array', items: { type: 'object', additionalProperties: true } },
+            completions: { type: 'array', items: { type: 'object', additionalProperties: true } },
+          },
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const user: any = (request as any).user;
+    const { studentId } = request.params as { studentId: string };
+    if (user.role !== 'PROFESSOR') {
+      throw new AppError(403, 'FORBIDDEN', 'Apenas professores podem acessar esta rota');
+    }
+    const result = await WorkoutsService.getWeeklyDashboard(studentId);
+    return reply.send(result);
+  });
+
   fastify.get('/history', {
     schema: {
       tags: ['Workouts'],

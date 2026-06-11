@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify';
-import { OccupancyService } from './occupancy.service';
-import { occupancyReadingSchema } from './occupancy.schema';
+import { OccupancyService } from './occupancy.service.js';
+import { occupancyReadingSchema } from './occupancy.schema.js';
 
 export const occupancyRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   const service = new OccupancyService();
