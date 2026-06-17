@@ -8,7 +8,7 @@ export const occupancyRoutes: FastifyPluginAsync = async (fastify: FastifyInstan
   // Exige autenticação em todas as rotas (usa o hook onRoute do auth plugin, se configurado)
   // Assumimos que o plugin de auth é global ou será aplicado.
 
-  fastify.get('/current', async (request, reply) => {
+  fastify.get('/current', async (_request, reply) => {
     const data = await service.getCurrentOccupancy();
     return reply.send(data);
   });
@@ -19,7 +19,7 @@ export const occupancyRoutes: FastifyPluginAsync = async (fastify: FastifyInstan
     return reply.send(data);
   });
 
-  fastify.get('/forecast', async (request, reply) => {
+  fastify.get('/forecast', async (_request, reply) => {
     const data = await service.getForecast();
     return reply.send(data);
   });

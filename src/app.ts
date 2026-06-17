@@ -81,7 +81,7 @@ app.get('/health', {
       }
     }
   }
-}, async (request, reply) => {
+}, async () => {
   return { status: 'ok' }
 })
 app.post('/api/occupancy/hardware', {

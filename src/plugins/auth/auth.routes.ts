@@ -4,7 +4,7 @@ import { loginSchema, registerSchema, updateProfileSchema } from './auth.schema.
 import { authenticate } from '../../middleware/authenticate.js';
 
 export async function authRoutes(fastify: FastifyInstance) {
-  fastify.setErrorHandler((error: any, request, reply) => {
+  fastify.setErrorHandler((error: any, _request, reply) => {
     if (error.validation) {
       return reply.status(400).send({
         error: 'Validation Error',

@@ -1,4 +1,3 @@
-import fastify from 'fastify';
 import { app } from '../../src/app.js';
 import { vi } from 'vitest';
 

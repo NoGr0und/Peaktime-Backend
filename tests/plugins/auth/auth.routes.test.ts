@@ -1,7 +1,6 @@
 import { test, expect, vi } from 'vitest';
 import supertest from 'supertest';
 import { buildApp } from '../../helpers/setup.js';
-import { supabase } from '../../../src/lib/supabase.js';
 import { AuthService } from '../../../src/plugins/auth/auth.service.js';
 
 test('POST /api/auth/login returns 200 and tokens', async () => {
