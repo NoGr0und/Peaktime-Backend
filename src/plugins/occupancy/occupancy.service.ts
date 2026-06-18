@@ -167,4 +167,29 @@ export class OccupancyService {
       level: this.getLevel(percentage),
     };
   }
+
+  async updateFromHardware(change: number) {
+    const lastReading = await prisma.occupancyReading.findFirst({
+      orderBy: { timestamp: 'desc' },
+    });
+
+    const currentCount = lastReading ? lastReading.count : 0;
+    const capacity = lastReading ? lastReading.capacity : 100;
+
+    const newCount = Math.max(0, currentCount + change);
+
+    const newReading = await prisma.occupancyReading.create({
+      data: {
+        count: newCount,
+        capacity,
+      },
+    });
+
+    const percentage = Math.round((newReading.count / newReading.capacity) * 100);
+    return {
+      ...newReading,
+      percentage,
+      level: this.getLevel(percentage),
+    };
+  }
 }

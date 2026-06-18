@@ -34,4 +34,23 @@ export const occupancyRoutes: FastifyPluginAsync = async (fastify: FastifyInstan
     const data = await service.createReading(body.count, body.capacity);
     return reply.status(201).send(data);
   });
+
+  fastify.post('/hardware', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['change'],
+        properties: {
+          change: { type: 'number', description: '1 para somar (entrada), -1 para subtrair (saída)' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { change } = request.body as { change: number };
+    const data = await service.updateFromHardware(change);
+    return reply.status(200).send({
+      success: true,
+      newOccupancy: data.count
+    });
+  });
 };
