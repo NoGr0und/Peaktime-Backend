@@ -5,4 +5,4 @@ elf = "arduino/hardwere.elf"
 
 [[net.forward]]
 from = "serial"
-to = "COM28"
+to = "COM8"
